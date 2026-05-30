@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOHENSTEIN SAMPLE STORAGE MANAGEMENT SYSTEM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- High-Performance Barcode & QR Code Scanning Library Layer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>
+        :root {
+            --primary: #003366;        /* Hohenstein Deep Corporate Navy Blue */
+            --primary-light: #f0f4f8;  /* Subtle Cool Ice-Blue for Structural Subtitles */
+            --accent: #0066cc;         /* Crisp Royal Blue Interactive Accent */
+            --bg-main: #f8fafc;        /* Clean, Bright Clinical Background */
+            --bg-card: #ffffff;        /* Pure White Elevated Surfaces */
+            --text-main: #0f172a;      /* Deep Slate for High-Contrast Readability */
+            --text-muted: #64748b;     /* Muted Slate Gray for secondary text */
+            --border: #cbd5e1;         /* Defined Component Borders */
+            --danger: #dc2626;         /* Disposed / Critical State Color */
+            --success: #16a34a;        /* Available / Active State Color */
+            --warning: #ea580c;        /* Borrowed State Color */
+            --info: #0284c7;           /* Management / Info State Color */
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-main); 
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 24px;
+            display: flex;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 1160px; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, var(--primary), #001f3f);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 51, 102, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-logo-img {
+            height: 56px;
+            width: 56px;
+            object-fit: cover;
+            background-color: #ffffff; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        header h2 { 
+            margin: 0; 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            color: #ffffff; 
+            letter-spacing: -0.01em;
+        }
+
+        .system-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            white-space: nowrap;
+        }
+
+        .tabs-nav {
+            display: flex;
+            background: transparent;
+            padding: 0;
+            margin-bottom: 36px;
+            gap: 28px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 14px 4px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover { color: var(--accent); }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+        .tab-content { display: none; animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tab-content.active { display: block; }
+
+        .workspace-layout { display: grid; grid-template-columns: 1fr; gap: 32px; }
+        @media (min-width: 900px) { .workspace-layout { grid-template-columns: 420px 1fr; } }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            margin-bottom: 28px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+
+        .card h3 { 
+            margin: -28px -28px 24px -28px; 
+            background: linear-gradient(90deg, var(--primary-light), #f8fafc);
+            color: var(--primary);
+            padding: 18px 28px;
+            font-size: 0.95rem; 
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            border-bottom: 1px solid var(--border);
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        input, select { 
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.9rem; box-sizing: border-box; background-color: #ffffff; color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent); background-color: #ffffff; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15); }
+
+        button.action-btn { 
+            width: 100%; padding: 12px 20px; background-color: var(--accent); color: white; border: none; 
+            border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button.action-btn:hover { background-color: #0052a3; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2); }
+        button.action-btn:active { transform: translateY(0); }
+        
+        button.secondary-btn { background-color: #f1f5f9; color: var(--primary); border: 1px solid var(--border); }
+        button.secondary-btn:hover { background-color: #e2e8f0; border-color: var(--text-muted); }
+
+        .table-scroll-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background-color: #ffffff; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8fafc; }
+
+        .badge { display: inline-flex; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; letter-spacing: 0.01em; }
+        .badge.badge-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .badge.badge-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .badge.badge-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde047; }
+        .badge.badge-info { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+
+        .items-counter { background: var(--primary); color: #ffffff; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; margin-left: auto; font-weight: 600; text-transform: none; }
+
+        .search-box-container { display: flex; gap: 14px; margin-bottom: 20px; }
+        .search-result-panel { background: #f0f7ff; border-left: 4px solid var(--accent); padding: 20px; border-radius: 0 8px 8px 0; display: none; margin-bottom: 20px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .search-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 0.85rem; color: var(--text-main); }
+        
+        .dashboard-group-title { color: var(--primary); padding: 12px 0; font-weight: 700; margin: 32px 0 16px 0; font-size: 1rem; border-bottom: 2px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+        .box-grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        .box-summary-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.01); }
+        .box-summary-card h4 { margin: 0 0 14px 0; color: var(--text-main); font-size: 0.95rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .sample-mini-list { font-size: 0.85rem; color: var(--text-main); list-style: none; padding: 0; margin: 0; max-height: 160px; overflow-y: auto; }
+        .sample-mini-list li { padding: 8px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+
+        .minimal-filter-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+            background-color: #ffffff;
+            color: var(--text-main);
+        }
+
+        /* Responsive Immersive Scanner Component Overlay UI */
+        .camera-overlay-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .scanner-panel-box {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .scanner-header-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .scanner-title-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+        #camera-feed-stream {
+            width: 100%;
+            background-color: #000000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        /* Custom adjustment to overwrite built-in html5-qrcode video layout spacing */
+        #camera-feed-stream video {
+            width: 100% !important;
+            height: auto !important;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 14px; }
+            header { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
+            .header-title-container { flex-direction: column; text-align: center; gap: 12px; }
+            
+            .tabs-nav { 
+                flex-direction: column; 
+                gap: 10px; 
+                border-bottom: none; 
+            }
+            .tab-btn { 
+                width: 100%; 
+                padding: 14px 18px; 
+                font-size: 0.9rem; 
+                border-bottom: none;
+                border-left: 3px solid transparent;
+                background-color: #ffffff;
+                color: var(--text-muted);
+                border-radius: 8px;
+                box-sizing: border-box;
+                border: 1px solid var(--border);
+                text-align: left;
+            }
+            .tab-btn:hover { color: var(--accent); background-color: #f8fafc; }
+            .tab-btn.active { 
+                border-bottom: none;
+                border-left: 3px solid var(--accent);
+                background-color: var(--primary-light);
+                color: var(--accent);
+            }
+
+            .form-grid { grid-template-columns: 1fr; }
+            .search-box-container { flex-direction: column; }
+            .search-box-container button { width: 100% !important; }
+            .card { padding: 20px; }
+            .card h3 { margin: -20px -20px 20px -20px; padding: 14px 20px; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- REAL CAMERA INTERACTIVE OVERLAY MODAL -->
+<div class="camera-overlay-modal" id="scannerModal">
+    <div class="scanner-panel-box">
+        <div class="scanner-header-wrapper">
+            <h3 class="scanner-title-text">📷 Live Barcode / QR Scanner</h3>
+            <button class="action-btn secondary-btn" style="width: auto; padding: 6px 14px; font-size: 0.8rem; margin: 0;" onclick="terminateHardwareCameraScan()">Cancel</button>
+        </div>
+        <div id="camera-feed-stream"></div>
+        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Align the barcode within the viewfinder to read it automatically.</p>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <div class="header-title-container">
+            <img class="header-logo-img" src="https://yt3.googleusercontent.com/ytc/AIdro_l29UdEKN4HlhnABIKV0lmYXR3zrpEcJ7BigRDnPPdlXkc=s900-c-k-c0x00ffffff-no-rj" alt="Corporate Logo">
+            <h2>HOHENSTEIN SAMPLE STORAGE MANAGEMENT SYSTEM</h2>
+        </div>
+        <span class="system-badge">Created by Arthur Law</span>
+    </header>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchSystemTab(event, 'tab-box-entry')">📦 Carton Box Entry</button>
+        <button class="tab-btn" onclick="switchSystemTab(event, 'tab-tracking-dashboard')">🔄 Tracking Logs</button>
+        <button class="tab-btn" onclick="switchSystemTab(event, 'tab-search-hub')">🔍 Search & Dashboard</button>
+        <button class="tab-btn" onclick="switchSystemTab(event, 'tab-disposal-mgmt')">⚖️ Disposal Management</button>
+    </div>
+
+    <!-- TAB 1: CARTON BOX ENTRY -->
+    <div id="tab-box-entry" class="tab-content active">
+        <div class="workspace-layout">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="card">
+                    <h3>1. Destination Allocation</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category">
+                                <option value="Non ALDI">Non ALDI</option>
+                                <option value="ALDI">ALDI</option>
+                                <option value="Ecopassport">Ecopassport</option>
+                                <option value="Bulky Sample">Bulky Sample</option>
+                                <option value="To Helen">To Helen</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="boxNo">Carton Box No</label>
+                            <input id="boxNo" placeholder="e.g. N001">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>2. Input Streaming</h3>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="reportNo">Manual Barcode Entry</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                            <input id="reportNo" placeholder="Format: ReportNo_Date (e.g. REP123_05/30/2026)" onkeydown="if(event.key === 'Enter') addSampleViaManualEntry()">
+                            <button class="action-btn secondary-btn" style="width: auto; white-space: nowrap;" onclick="addSampleViaManualEntry()">Add</button>
+                        </div>
+                        <button class="action-btn secondary-btn" style="background-color: var(--primary);" onclick="initiateMobileCameraScan()">📷 Scan by Phone</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>3. Staged Records Queue <span class="items-counter" id="entryQueueCounter">0 Samples</span></h3>
+                <div class="table-scroll-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Report Number</th><th>Parsed Retention Target</th><th style="text-align: right;">Action</th></tr>
+                        </thead>
+                        <tbody id="entryQueueTableBody">
+                            <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 44px;">Queue empty. Ready for manual entry.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 24px;">
+                    <button class="action-btn" onclick="commitBatchToStorageLog()">💾 Confirm Batch Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: TRACKING LOGS -->
+    <div id="tab-tracking-dashboard" class="tab-content">
+        <div class="workspace-layout">
+            <div class="card">
+                <h3>🔄 Flow Control Terminal</h3>
+                <div class="form-group">
+                    <label for="trackingReportNo">Active Tracking Item ID</label>
+                    <input id="trackingReportNo" placeholder="Enter target Report Number">
+                </div>
+                <div class="form-group">
+                    <label for="staff">Authorized Staff Sign-Off</label>
+                    <input id="staff" placeholder="Full Employee Name">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                    <button class="action-btn" onclick="executeTransaction('Borrow')">📥 Authorize Borrow Request</button>
+                    <button class="action-btn secondary-btn" onclick="executeTransaction('Return')">📤 Authorize Return Receipt</button>
+                    <button class="action-btn secondary-btn" onclick="executeTransaction('Return to CS/Client')">💼 Return to CS/Client</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📋 Live Borrow & Return Activity Trail</h3>
+                <input class="minimal-filter-input" id="filterTrackingInput" placeholder="🔍 Filter logs by Report No, Event, or Staff..." oninput="filterTrackingLogsTable()">
+                <div class="table-scroll-wrapper" style="max-height: 460px;">
+                    <table>
+                        <thead>
+                            <tr><th>Report Number</th><th>Operation Event</th><th>Staff in Charge</th><th>Timestamp</th></tr>
+                        </thead>
+                        <tbody id="trackingTableBody">
+                            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 36px;">Loading historical transaction trails...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: SEARCH & DASHBOARD -->
+    <div id="tab-search-hub" class="tab-content">
+        <div class="card">
+            <h3>🔍 Global Sample Locator Engine</h3>
+            <div class="search-box-container">
+                <input id="searchQuery" placeholder="Enter full Report Number to pinpoint location..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
+                <button class="action-btn" style="width: 150px;" onclick="performSampleSearch()">Search Item</button>
+            </div>
+
+            <div class="search-result-panel" id="searchResultPanel">
+                <h4 style="margin: 0 0 14px 0; color: var(--accent); font-size: 1rem; font-weight: 700;">🎯 Asset Match Profile Found:</h4>
+                <div class="search-result-grid">
+                    <div><strong>Report No:</strong> <span id="resReportNo" style="color: var(--accent); font-weight: 700;">-</span></div>
+                    <div><strong>Category Group:</strong> <span id="resCategory" style="color: var(--text-main);">-</span></div>
+                    <div><strong>Physical Location:</strong> <span id="resBox" class="badge badge-info">-</span></div>
+                    <div><strong>Lab Expiry Date:</strong> <span id="resDate" style="color: var(--text-main);">-</span></div>
+                    <div><strong>Current Custody Status:</strong> <span id="resStatus">-</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📊 Master Inventory Distribution Hub</h3>
+            <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                <button class="action-btn secondary-btn" style="width: auto; padding: 10px 16px; font-size: 0.85rem;" onclick="refreshMasterDataCache()">🔄 Refresh Dashboard Data</button>
+            </div>
+            <div id="inventoryVisualHub">
+                <div style="text-align: center; color: var(--text-muted); padding: 44px;">Constructing index cluster tree models...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: DISPOSAL MANAGEMENT -->
+    <div id="tab-disposal-mgmt" class="tab-content">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--border); padding-bottom: 14px;">
+                <h3 style="margin: 0; border: none; padding: 0; background: none; color: var(--primary);">🗂️ Bulk Change Status Action</h3>
+                <button class="action-btn secondary-btn" id="bulkActionToggleBtn" style="width: auto; padding: 6px 14px; font-size: 0.8rem;" onclick="toggleBulkActionPanel()">Minimize</button>
+            </div>
+            
+            <div id="bulkActionContainer">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bulkBoxNoInput">Enter Box Number to Dispose</label>
+                        <input id="bulkBoxNoInput" placeholder="e.g. N001">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkCategorySelect">Associated Category</label>
+                        <select id="bulkCategorySelect">
+                            <option value="Non ALDI">Non ALDI</option>
+                            <option value="ALDI">ALDI</option>
+                            <option value="Ecopassport">Ecopassport</option>
+                            <option value="Bulky Sample">Bulky Sample</option>
+                            <option value="To Helen">To Helen</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 8px;">
+                    <button class="action-btn" style="background-color: var(--danger);" onclick="submitBulkDisposalStatus()">Mark Box as Disposed</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>⚖️ Regulatory Box Lifecycle Sorting Terminal</h3>
+            <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.01em;">
+                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">Non ALDI</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
+            </p>
+            <input class="minimal-filter-input" id="filterDisposalInput" placeholder="🔍 Filter terminal by Box No or Category Group..." oninput="filterDisposalLogsTable()">
+            <div class="table-scroll-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Carton Box No</th><th>Category</th><th>Internal Max Due Date</th><th>Target Disposal Window</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="disposalTableBody">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 44px;">Initiating evaluation arrays...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyA8uhnimawVrmVm3QcWUh0ZabUJiJE8VdQS5l0uuxS4V3RvWjxAidfkHfjE-vg_m91/exec";
+
+let activeBatchQueue = [];
+let masterInventoryCache = []; 
+let hardwareCameraInstance = null; // Instantiated instance mapping for html5Qrcode
+
+function switchSystemTab(evt, tabId) {
+    // Gracefully shut down active camera feed if tab switching occurs mid-scan
+    terminateHardwareCameraScan();
+
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+    document.getElementById(tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+    
+    if (tabId === 'tab-tracking-dashboard') {
+        fetchTransactionalLogs();
+    } else if (tabId === 'tab-search-hub') {
+        refreshMasterDataCache();
+    } else if (tabId === 'tab-disposal-mgmt') {
+        refreshMasterDataCache(true);
+    }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    fetchTransactionalLogs();
+    refreshMasterDataCache(true);
+});
+
+/* INITIATE NATIVE DEVICE CAMERA STREAM */
+function initiateMobileCameraScan() {
+    document.getElementById("scannerModal").style.display = "flex";
+    
+    if (!hardwareCameraInstance) {
+        hardwareCameraInstance = new Html5Qrcode("camera-feed-stream");
+    }
+    
+    // Configured with standard aspect ratio optimization for both 1D Barcodes and square QR profiles
+    const scanningConfiguration = { 
+        fps: 15, 
+        qrbox: (width, height) => {
+            // Optimized widescreen viewport for scanning long industrial barcodes easily
+            return { width: Math.min(width * 0.85, 360), height: 160 };
+        }
+    };
+
+    hardwareCameraInstance.start(
+        { facingMode: "environment" }, // Instructs phone to leverage high-res rear lens matrix
+        scanningConfiguration,
+        (decodedPayload) => {
+            // On Success: Add data to entry queue and cleanly stop camera thread
+            parseAndStageBarcodeData(decodedPayload);
+            terminateHardwareCameraScan();
+        },
+        (errorDetails) => {
+            // Suppress streaming evaluation noise to prevent console flooding
+        }
+    ).catch(hardwareFault => {
+        alert("Camera Access Failure: Please ensure permission constraints are lifted.\n\nDetails: " + hardwareFault);
+        terminateHardwareCameraScan();
+    });
+}
+
+/* TERMINATE CAMERA THREAD AND RELEASE HARDWARE RESOURCES CLEANLY */
+function terminateHardwareCameraScan() {
+    document.getElementById("scannerModal").style.display = "none";
+    if (hardwareCameraInstance && hardwareCameraInstance.isScanning) {
+        hardwareCameraInstance.stop().catch(err => console.warn("Camera teardown warning:", err));
+    }
+}
+
+function parseAndStageBarcodeData(rawPayload) {
+    rawPayload = rawPayload.trim();
+    if (!rawPayload) return;
+
+    let targetReportNo = rawPayload;
+    let computedISOString = null;
+
+    if (rawPayload.includes("_")) {
+        let segments = rawPayload.split("_");
+        targetReportNo = segments[0];
+        let rawDateString = segments[1]; 
+        let pieces = rawDateString.split("/");
+        if (pieces.length === 3) {
+            computedISOString = `${pieces[2]}-${pieces[0].padStart(2,"0")}-${pieces[1].padStart(2,"0")}`;
+        }
+    }
+
+    if (activeBatchQueue.some(item => item.reportNo === targetReportNo)) {
+        alert(`Notice: ID ${targetReportNo} already exists in the queue.`);
+        return;
+    }
+
+    activeBatchQueue.push({
+        reportNo: targetReportNo,
+        dueDate: computedISOString,
+        displayDate: computedISOString ? computedISOString : "No Date Parsed"
+    });
+
+    renderStagedEntryGrid();
+}
+
+function addSampleViaManualEntry() {
+    const inputField = document.getElementById("reportNo");
+    if (!inputField.value.trim()) return;
+    parseAndStageBarcodeData(inputField.value);
+    inputField.value = "";
+}
+
+function renderStagedEntryGrid() {
+    const body = document.getElementById("entryQueueTableBody");
+    document.getElementById("entryQueueCounter").innerText = `${activeBatchQueue.length} Samples`;
+
+    if (activeBatchQueue.length === 0) {
+        body.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 44px;">Queue empty. Ready for manual entry.</td></tr>`;
+        return;
+    }
+
+    body.innerHTML = "";
+    activeBatchQueue.forEach((element, pos) => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${element.reportNo}</strong></td>
+            <td><code>${element.displayDate}</code></td>
+            <td style="text-align: right;"><button style="color:var(--danger); background:none; border:none; font-weight:600; cursor:pointer;" onclick="removeItemFromActiveStaging(${pos})">Remove</button></td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function removeItemFromActiveStaging(pos) {
+    activeBatchQueue.splice(pos, 1);
+    renderStagedEntryGrid();
+}
+
+async function commitBatchToStorageLog() {
+    const targetBox = document.getElementById("boxNo").value.trim();
+    const targetedCategory = document.getElementById("category").value;
+
+    if (!targetBox) { alert("Operational Error: Carton Box No cannot be blank."); return; }
+    if (activeBatchQueue.length === 0) { alert("Abort: Staging queue is empty."); return; }
+
+    let recordsProcessed = 0;
+
+    for (let record of activeBatchQueue) {
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "addStorage",
+                    reportNo: record.reportNo,
+                    category: targetedCategory,
+                    boxNo: targetBox,
+                    labDueDate: record.displayDate
+                })
+            });
+            recordsProcessed++;
+        } catch (fault) {
+            console.error(fault);
+        }
+    }
+
+    alert(`Operation Completed!\nSubmitted ${recordsProcessed} samples.`);
+    activeBatchQueue = [];
+    renderStagedEntryGrid();
+    refreshMasterDataCache(true);
+}
+
+async function executeTransaction(actionType) {
+    const reportNo = document.getElementById("trackingReportNo").value.trim();
+    const staffName = document.getElementById("staff").value.trim();
+
+    if (!reportNo) { alert("Please supply target Report Number."); return; }
+    if (!staffName) { alert("Authorized Staff name signature is required."); return; }
+
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "executeTransaction",
+                reportNo: reportNo,
+                transactionType: actionType,
+                staff: staffName,
+                timestamp: new Date().toLocaleString()
+            })
+        });
+
+        alert(`Transaction request [${actionType}] pushed successfully.`);
+        document.getElementById("trackingReportNo").value = "";
+        setTimeout(() => {
+            fetchTransactionalLogs();
+            refreshMasterDataCache(true);
+        }, 1000);
+    } catch (e) {
+        alert("API connection failure.");
+    }
+}
+
+function fetchTransactionalLogs() {
+    const tBody = document.getElementById("trackingTableBody");
+    if (!tBody) return;
+    
+    fetch(`${GOOGLE_SCRIPT_URL}?action=getReturns`)
+    .then(r => r.json())
+    .then(logs => {
+        if (logs.length === 0) {
+            tBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 36px;">No transaction activities tracked.</td></tr>`;
+            return;
+        }
+        tBody.innerHTML = "";
+        logs.forEach(l => {
+            let badgeClass = "badge-info";
+            if (l.Action === "Borrow") badgeClass = "badge-warning";
+            else if (l.Action === "Return") badgeClass = "badge-success";
+            else if (l.Action === "Disposed") badgeClass = "badge-danger";
+            
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${l.ReportNo}</strong></td>
+                <td><span class="badge ${badgeClass}">${l.Action.toUpperCase()}</span></td>
+                <td>${l.Staff}</td>
+                <td><small>${l.Timestamp}</small></td>
+            `;
+            tBody.appendChild(tr);
+        });
+        filterTrackingLogsTable();
+    })
+    .catch(() => {
+        tBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 36px;">Unable to fetch transaction trails.</td></tr>`;
+    });
+}
+
+function filterTrackingLogsTable() {
+    let query = document.getElementById("filterTrackingInput").value.toLowerCase();
+    let rows = document.querySelectorAll("#trackingTableBody tr");
+    rows.forEach(row => {
+        if (row.cells.length < 4) return;
+        let contentText = row.textContent.toLowerCase();
+        row.style.display = contentText.includes(query) ? "" : "none";
+    });
+}
+
+async function refreshMasterDataCache(triggerDisposalAfter = false) {
+    const hub = document.getElementById("inventoryVisualHub");
+    if (hub) {
+        hub.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 44px;">Syncing latest inventory matrix...</div>`;
+    }
+
+    try {
+        const storageResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getStorage`);
+        const storageData = await storageResponse.json();
+
+        const returnsResponse = await fetch(`${GOOGLE_SCRIPT_URL}?action=getReturns`);
+        const returnsData = await returnsResponse.json();
+
+        let finalActionTracker = {};
+        returnsData.forEach(trailLog => {
+            if (trailLog.ReportNo) {
+                finalActionTracker[trailLog.ReportNo.toString().trim().toLowerCase()] = {
+                    actionType: trailLog.Action,
+                    handler: trailLog.Staff
+                };
+            }
+        });
+
+        masterInventoryCache = storageData.map(record => {
+            let itemKey = record.ReportNo ? record.ReportNo.toString().trim().toLowerCase() : "";
+            let computedStatus = "Available in Box"; 
+
+            if (finalActionTracker[itemKey]) {
+                let latestEvent = finalActionTracker[itemKey].actionType;
+                let latestStaff = finalActionTracker[itemKey].handler;
+
+                if (latestEvent === "Disposed") {
+                    computedStatus = "Disposed";
+                } else if (latestEvent === "Borrow") {
+                    computedStatus = `Borrowed by ${latestStaff}`;
+                } else if (latestEvent === "Return") {
+                    computedStatus = "Available in Box";
+                } else if (latestEvent === "Return to CS/Client") {
+                    computedStatus = "Returned to CS/Client";
+                }
+            } else if (record.Status) {
+                computedStatus = record.Status;
+            }
+
+            return {
+                ...record,
+                Status: computedStatus
+            };
+        });
+
+        renderDashboardVisualHub();
+        calculateDisposalSchedules();
+    } catch (err) {
+        console.error("Master Sync Failure:", err);
+        if (hub) {
+            hub.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 36px;">Unable to synchronize memory database cache.</div>`;
+        }
+    }
+}
+
+function performSampleSearch() {
+    let q = document.getElementById("searchQuery").value.trim().toLowerCase();
+    let panel = document.getElementById("searchResultPanel");
+    
+    if (!q) { alert("Please type an exact Report No to find."); return; }
+    
+    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase() === q);
+    if (!match) {
+        alert("No matched asset footprint found in active storage.");
+        panel.style.display = "none";
+        return;
+    }
+
+    document.getElementById("resReportNo").innerText = match.ReportNo;
+    document.getElementById("resCategory").innerText = match.Category;
+    document.getElementById("resBox").innerText = match.BoxNo;
+    document.getElementById("resDate").innerText = match.LabDueDate ? match.LabDueDate.split("T")[0] : "N/A";
+    
+    if (match.Status === "Disposed") {
+        document.getElementById("resStatus").innerHTML = `<span class="badge badge-danger">Disposed</span>`;
+    } else if (match.Status && match.Status.includes("Borrowed")) {
+        document.getElementById("resStatus").innerHTML = `<span class="badge badge-warning">${match.Status}</span>`;
+    } else if (match.Status && match.Status.includes("Returned to CS")) {
+        document.getElementById("resStatus").innerHTML = `<span class="badge badge-info">${match.Status}</span>`;
+    } else {
+        document.getElementById("resStatus").innerHTML = `<span class="badge badge-success">Available in Box</span>`;
+    }
+    
+    panel.style.display = "block";
+}
+
+function toggleSampleVisibilityList(btnEl) {
+    const targetsList = btnEl.parentElement.querySelector(".sample-mini-list");
+    if (targetsList.style.display === "none") {
+        targetsList.style.display = "block";
+        btnEl.innerText = "Hide Contents";
+    } else {
+        targetsList.style.display = "none";
+        btnEl.innerText = "Open Sample List";
+    }
+}
+
+function renderDashboardVisualHub() {
+    const hub = document.getElementById("inventoryVisualHub");
+    if (!hub) return;
+    
+    if (masterInventoryCache.length === 0) {
+        hub.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 36px;">Inventory engine report is empty.</div>`;
+        return;
+    }
+
+    let dataTree = {};
+    masterInventoryCache.forEach(item => {
+        let cat = item.Category || "Uncategorized";
+        let box = item.BoxNo || "Unknown Box";
+        if (!dataTree[cat]) dataTree[cat] = {};
+        if (!dataTree[cat][box]) dataTree[cat][box] = [];
+        dataTree[cat][box].push(item);
+    });
+
+    hub.innerHTML = "";
+    Object.keys(dataTree).sort().forEach(catName => {
+        let groupTitle = document.createElement("div");
+        groupTitle.className = "dashboard-group-title";
+        groupTitle.innerText = `Category: ${catName}`;
+        hub.appendChild(groupTitle);
+
+        let grid = document.createElement("div");
+        grid.className = "box-grid-layout";
+
+        Object.keys(dataTree[catName]).sort().forEach(boxName => {
+            let boxCard = document.createElement("div");
+            boxCard.className = "box-summary-card";
+            
+            let items = dataTree[catName][boxName];
+            let listItemsHtml = items.map(i => {
+                let indicator = "🟢";
+                if (i.Status === "Disposed") indicator = "❌";
+                else if (i.Status && i.Status.includes("Borrowed")) indicator = "🟠";
+                else if (i.Status && i.Status.includes("Returned to CS")) indicator = "💼";
+                
+                return `<li><span>${indicator} ${i.ReportNo}</span> <small style="color:var(--text-muted); font-size:10px;">(${i.Status})</small></li>`;
+            }).join("");
+
+            boxCard.innerHTML = `
+                <h4>📦 Box ${boxName} <span class="badge badge-info" style="font-size:0.7rem;">Qty ${items.length}</span></h4>
+                <button class="action-btn secondary-btn" style="padding: 6px 12px; font-size: 0.75rem; margin-bottom: 10px; width: auto;" onclick="toggleSampleVisibilityList(this)">Open Sample List</button>
+                <ul class="sample-mini-list" style="display: none;">${listItemsHtml}</ul>
+            `;
+            grid.appendChild(boxCard);
+        });
+        hub.appendChild(grid);
+    });
+}
+
+function calculateDisposalSchedules() {
+    const tableBody = document.getElementById("disposalTableBody");
+    if (!tableBody) return;
+    
+    if (masterInventoryCache.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 44px;">No master data catalog loaded.</td></tr>`;
+        return;
+    }
+
+    let boxGroups = {};
+    masterInventoryCache.forEach(itm => {
+        let bn = itm.BoxNo || "Unknown Box";
+        let catGroup = itm.Category || "Non ALDI";
+        let compositeKey = `${catGroup}_${bn}`;
+
+        if (!boxGroups[compositeKey]) {
+            boxGroups[compositeKey] = { boxNo: bn, category: catGroup, dates: [], allDisposed: true };
+        }
+        
+        if (itm.LabDueDate && itm.LabDueDate !== "No Date Parsed") {
+            boxGroups[compositeKey].dates.push(new Date(itm.LabDueDate));
+        }
+        
+        if (itm.Status !== "Disposed") {
+            boxGroups[compositeKey].allDisposed = false;
+        }
+    });
+
+    tableBody.innerHTML = "";
+    const now = new Date();
+
+    Object.values(boxGroups).forEach(b => {
+        let maxDateStr = "N/A", targetDispStr = "N/A", statusHtml = `<span class="badge badge-success">Safe Baseline</span>`;
+
+        if (b.dates.length > 0) {
+            let maxDate = new Date(Math.max.apply(null, b.dates));
+            maxDateStr = maxDate.toISOString().split("T")[0];
+
+            let offsetDate = new Date(maxDate.getTime());
+            if (b.category === "ALDI") offsetDate.setMonth(offsetDate.getMonth() + 6);
+            else if (b.category === "Ecopassport") offsetDate.setMonth(offsetDate.getMonth() + 12);
+            else offsetDate.setMonth(offsetDate.getMonth() + 3);
+
+            targetDispStr = offsetDate.toISOString().split("T")[0];
+            statusHtml = (offsetDate <= now) ? `<span class="badge badge-danger">Dispose Now</span>` : `<span class="badge badge-warning">In Retention</span>`;
+        }
+
+        if (b.allDisposed) {
+            statusHtml = `<span class="badge badge-danger" style="opacity: 0.55; background:#cbd5e1; color:#475569; border:1px solid #94a3b8;">Disposed</span>`;
+        }
+
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td><strong>${b.boxNo}</strong></td><td><strong>${b.category}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
+        tableBody.appendChild(tr);
+    });
+    filterDisposalLogsTable();
+}
+
+function filterDisposalLogsTable() {
+    let query = document.getElementById("filterDisposalInput").value.toLowerCase();
+    let rows = document.querySelectorAll("#disposalTableBody tr");
+    rows.forEach(row => {
+        if (row.cells.length < 5) return;
+        let contentText = row.textContent.toLowerCase();
+        row.style.display = contentText.includes(query) ? "" : "none";
+    });
+}
+
+function toggleBulkActionPanel() {
+    const targetDiv = document.getElementById("bulkActionContainer");
+    const toggleBtn = document.getElementById("bulkActionToggleBtn");
+    if (targetDiv.style.display === "none") {
+        targetDiv.style.display = "block";
+        toggleBtn.innerText = "Minimize";
+    } else {
+        targetDiv.style.display = "none";
+        toggleBtn.innerText = "Expand";
+    }
+}
+
+async function submitBulkDisposalStatus() {
+    const targetedBoxNo = document.getElementById("bulkBoxNoInput").value.trim();
+    const targetedCategory = document.getElementById("bulkCategorySelect").value;
+    
+    if (!targetedBoxNo) {
+        alert("Please enter a valid Carton Box Number.");
+        return;
+    }
+
+    let matchingItems = masterInventoryCache.filter(itm => 
+        itm.BoxNo && itm.BoxNo.toString().toLowerCase() === targetedBoxNo.toLowerCase() &&
+        itm.Category && itm.Category.toLowerCase() === targetedCategory.toLowerCase()
+    );
+
+    if (matchingItems.length === 0) {
+        alert("No active samples found matching this Box and Category configuration.");
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to change the status of ALL ${matchingItems.length} items inside Box [${targetedBoxNo}] to "Disposed"? This will instantly re-evaluate your lifecycle terminal parameters.`)) {
+        return;
+    }
+
+    matchingItems.forEach(itm => {
+        itm.Status = "Disposed";
+    });
+
+    renderDashboardVisualHub();
+    calculateDisposalSchedules();
+
+    let processedCount = 0;
+    for (let item of matchingItems) {
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "executeTransaction",
+                    reportNo: item.ReportNo,
+                    transactionType: "Disposed",
+                    staff: "System Bulk Operation",
+                    timestamp: new Date().toLocaleString()
+                })
+            });
+            processedCount++;
+        } catch (e) {
+            console.error(`Failed log write configuration: ${item.ReportNo}`, e);
+        }
+    }
+    
+    alert(`Bulk status execution committed successfully. Appended ${processedCount} records to the database ledger.`);
+    document.getElementById("bulkBoxNoInput").value = "";
+    
+    refreshMasterDataCache(true);
+    fetchTransactionalLogs();
+}
+</script>
+</body>
+</html>
