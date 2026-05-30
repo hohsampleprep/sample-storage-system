@@ -250,7 +250,6 @@
             overflow: hidden;
             border: 1px solid var(--border);
         }
-        /* Custom adjustment to overwrite built-in html5-qrcode video layout spacing */
         #camera-feed-stream video {
             width: 100% !important;
             height: auto !important;
@@ -308,7 +307,7 @@
             <button class="action-btn secondary-btn" style="width: auto; padding: 6px 14px; font-size: 0.8rem; margin: 0;" onclick="terminateHardwareCameraScan()">Cancel</button>
         </div>
         <div id="camera-feed-stream"></div>
-        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Align the barcode within the viewfinder to read it automatically.</p>
+        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); text-align: center;">Align the code within the window area to scan it automatically.</p>
     </div>
 </div>
 
@@ -360,7 +359,7 @@
                             <input id="reportNo" placeholder="Format: ReportNo_Date (e.g. REP123_05/30/2026)" onkeydown="if(event.key === 'Enter') addSampleViaManualEntry()">
                             <button class="action-btn secondary-btn" style="width: auto; white-space: nowrap;" onclick="addSampleViaManualEntry()">Add</button>
                         </div>
-                        <button class="action-btn secondary-btn" style="background-color: var(--primary);" onclick="initiateMobileCameraScan()">📷 Scan by Phone</button>
+                        <button class="action-btn" style="background-color: var(--primary);" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
                     </div>
                 </div>
             </div>
@@ -391,9 +390,12 @@
                 <h3>🔄 Flow Control Terminal</h3>
                 <div class="form-group">
                     <label for="trackingReportNo">Active Tracking Item ID</label>
-                    <input id="trackingReportNo" placeholder="Enter target Report Number">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input id="trackingReportNo" placeholder="Enter target Report Number">
+                        <button class="action-btn" style="background-color: var(--primary); padding: 10px; font-size: 0.8rem;" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-top: 20px;">
                     <label for="staff">Authorized Staff Sign-Off</label>
                     <input id="staff" placeholder="Full Employee Name">
                 </div>
@@ -428,6 +430,7 @@
             <div class="search-box-container">
                 <input id="searchQuery" placeholder="Enter full Report Number to pinpoint location..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
                 <button class="action-btn" style="width: 150px;" onclick="performSampleSearch()">Search Item</button>
+                <button class="action-btn" style="background-color: var(--primary); width: 180px;" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
             </div>
 
             <div class="search-result-panel" id="searchResultPanel">
@@ -509,10 +512,9 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyA8uhnimawVr
 
 let activeBatchQueue = [];
 let masterInventoryCache = []; 
-let hardwareCameraInstance = null; // Instantiated instance mapping for html5Qrcode
+let hardwareCameraInstance = null; 
 
 function switchSystemTab(evt, tabId) {
-    // Gracefully shut down active camera feed if tab switching occurs mid-scan
     terminateHardwareCameraScan();
 
     document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
@@ -534,7 +536,7 @@ window.addEventListener("DOMContentLoaded", () => {
     refreshMasterDataCache(true);
 });
 
-/* INITIATE NATIVE DEVICE CAMERA STREAM */
+/* INITIATE NATIVE DEVICE CAMERA STREAM WITH DYNAMIC ROUTING RULES */
 function initiateMobileCameraScan() {
     document.getElementById("scannerModal").style.display = "flex";
     
@@ -542,28 +544,39 @@ function initiateMobileCameraScan() {
         hardwareCameraInstance = new Html5Qrcode("camera-feed-stream");
     }
     
-    // Configured with standard aspect ratio optimization for both 1D Barcodes and square QR profiles
     const scanningConfiguration = { 
         fps: 15, 
         qrbox: (width, height) => {
-            // Optimized widescreen viewport for scanning long industrial barcodes easily
             return { width: Math.min(width * 0.85, 360), height: 160 };
         }
     };
 
     hardwareCameraInstance.start(
-        { facingMode: "environment" }, // Instructs phone to leverage high-res rear lens matrix
+        { facingMode: "environment" }, 
         scanningConfiguration,
         (decodedPayload) => {
-            // On Success: Add data to entry queue and cleanly stop camera thread
-            parseAndStageBarcodeData(decodedPayload);
+            let processedString = decodedPayload.trim();
+            
+            // Context Routing Logic checking which view layer is currently active
+            if (document.getElementById("tab-box-entry").classList.contains("active")) {
+                parseAndStageBarcodeData(processedString);
+            } 
+            else if (document.getElementById("tab-tracking-dashboard").classList.contains("active")) {
+                // If the barcode contains standard structural data details like '_', clean it for processing
+                if (processedString.includes("_")) { processedString = processedString.split("_")[0]; }
+                document.getElementById("trackingReportNo").value = processedString;
+            } 
+            else if (document.getElementById("tab-search-hub").classList.contains("active")) {
+                if (processedString.includes("_")) { processedString = processedString.split("_")[0]; }
+                document.getElementById("searchQuery").value = processedString;
+                performSampleSearch();
+            }
+            
             terminateHardwareCameraScan();
         },
-        (errorDetails) => {
-            // Suppress streaming evaluation noise to prevent console flooding
-        }
+        (errorDetails) => {}
     ).catch(hardwareFault => {
-        alert("Camera Access Failure: Please ensure permission constraints are lifted.\n\nDetails: " + hardwareFault);
+        alert("Camera Access Failure: Please ensure camera permission constraints are lifted.\n\nDetails: " + hardwareFault);
         terminateHardwareCameraScan();
     });
 }
