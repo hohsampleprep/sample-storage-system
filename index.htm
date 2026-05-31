@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- High-Performance Barcode & QR Code Scanning Library Layer -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <style>
@@ -299,7 +298,6 @@
 </head>
 <body>
 
-<!-- REAL CAMERA INTERACTIVE OVERLAY MODAL -->
 <div class="camera-overlay-modal" id="scannerModal">
     <div class="scanner-panel-box">
         <div class="scanner-header-wrapper">
@@ -327,7 +325,6 @@
         <button class="tab-btn" onclick="switchSystemTab(event, 'tab-disposal-mgmt')">⚖️ Disposal Management</button>
     </div>
 
-    <!-- TAB 1: CARTON BOX ENTRY -->
     <div id="tab-box-entry" class="tab-content active">
         <div class="workspace-layout">
             <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -383,7 +380,6 @@
         </div>
     </div>
 
-    <!-- TAB 2: TRACKING LOGS -->
     <div id="tab-tracking-dashboard" class="tab-content">
         <div class="workspace-layout">
             <div class="card">
@@ -423,7 +419,6 @@
         </div>
     </div>
 
-    <!-- TAB 3: SEARCH & DASHBOARD -->
     <div id="tab-search-hub" class="tab-content">
         <div class="card">
             <h3>🔍 Global Sample Locator Engine</h3>
@@ -456,15 +451,14 @@
         </div>
     </div>
 
-    <!-- TAB 4: DISPOSAL MANAGEMENT -->
     <div id="tab-disposal-mgmt" class="tab-content">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--border); padding-bottom: 14px;">
                 <h3 style="margin: 0; border: none; padding: 0; background: none; color: var(--primary);">🗂️ Bulk Change Status Action</h3>
-                <button class="action-btn secondary-btn" id="bulkActionToggleBtn" style="width: auto; padding: 6px 14px; font-size: 0.8rem;" onclick="toggleBulkActionPanel()">Minimize</button>
+                <button class="action-btn secondary-btn" id="bulkActionToggleBtn" style="width: auto; padding: 6px 14px; font-size: 0.8rem;" onclick="toggleBulkActionPanel()">Expand</button>
             </div>
             
-            <div id="bulkActionContainer">
+            <div id="bulkActionContainer" style="display: none;">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="bulkBoxNoInput">Enter Box Number to Dispose</label>
@@ -496,7 +490,7 @@
             <div class="table-scroll-wrapper">
                 <table>
                     <thead>
-                        <tr><th>Carton Box No</th><th>Category</th><th>Internal Max Due Date</th><th>Target Disposal Window</th><th>Status</th></tr>
+                        <tr><th>Category</th><th>Carton Box No</th><th>Internal Max Due Date</th><th>Target Disposal Window</th><th>Status</th></tr>
                     </thead>
                     <tbody id="disposalTableBody">
                         <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 44px;">Initiating evaluation arrays...</td></tr>
@@ -654,6 +648,13 @@ function removeItemFromActiveStaging(pos) {
 }
 
 async function commitBatchToStorageLog() {
+    // SECURITY AUTHENTICATION PROMPT Layer
+    const systemVerificationToken = prompt("Security clearance required.\nPlease type the authorization key to save changes:");
+    if (systemVerificationToken !== "SPP") {
+        alert("Operation Aborted: System access denied. Invalid password code.");
+        return;
+    }
+
     const targetBox = document.getElementById("boxNo").value.trim();
     const targetedCategory = document.getElementById("category").value;
 
@@ -950,7 +951,14 @@ function calculateDisposalSchedules() {
     tableBody.innerHTML = "";
     const now = new Date();
 
-    Object.values(boxGroups).forEach(b => {
+    // SORTING PROCESS - Categorical Ascending Order matched into Box Numbers Ascending sequence
+    const sortedTimelineArrays = Object.values(boxGroups).sort((alpha, beta) => {
+        const structuralCategoryComparison = (alpha.category || "").localeCompare(beta.category || "", undefined, {numeric: true, sensitivity: 'base'});
+        if (structuralCategoryComparison !== 0) return structuralCategoryComparison;
+        return (alpha.boxNo || "").localeCompare(beta.boxNo || "", undefined, {numeric: true, sensitivity: 'base'});
+    });
+
+    sortedTimelineArrays.forEach(b => {
         let maxDateStr = "N/A", targetDispStr = "N/A", statusHtml = `<span class="badge badge-success">Safe Baseline</span>`;
 
         if (b.dates.length > 0) {
@@ -971,7 +979,8 @@ function calculateDisposalSchedules() {
         }
 
         let tr = document.createElement("tr");
-        tr.innerHTML = `<td><strong>${b.boxNo}</strong></td><td><strong>${b.category}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
+        // Rearranged table structure layout: Column 1 = Category, Column 2 = Carton Box No
+        tr.innerHTML = `<td><strong>${b.category}</strong></td><td><strong>${b.boxNo}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
         tableBody.appendChild(tr);
     });
     filterDisposalLogsTable();
@@ -1000,6 +1009,13 @@ function toggleBulkActionPanel() {
 }
 
 async function submitBulkDisposalStatus() {
+    // SECURITY AUTHENTICATION PROMPT Layer
+    const systemVerificationToken = prompt("Security clearance required.\nPlease type the authorization key to mark box as disposed:");
+    if (systemVerificationToken !== "SPP") {
+        alert("Operation Aborted: System access denied. Invalid password code.");
+        return;
+    }
+
     const targetedBoxNo = document.getElementById("bulkBoxNoInput").value.trim();
     const targetedCategory = document.getElementById("bulkCategorySelect").value;
     
