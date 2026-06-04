@@ -334,7 +334,7 @@
                         <div class="form-group">
                             <label for="category">Category</label>
                             <select id="category">
-                                <option value="Non ALDI">Non ALDI</option>
+                                <option value="LIDL">LIDL</option>
                                 <option value="ALDI">ALDI</option>
                                 <option value="Ecopassport">Ecopassport</option>
                                 <option value="Bulky Sample">Bulky Sample</option>
@@ -423,7 +423,7 @@
         <div class="card">
             <h3>🔍 Global Sample Locator Engine</h3>
             <div class="search-box-container">
-                <input id="searchQuery" placeholder="Enter full Report Number to pinpoint location..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
+                <input id="searchQuery" placeholder="Enter full or partial Report Number..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
                 <button class="action-btn" style="width: 150px;" onclick="performSampleSearch()">Search Item</button>
                 <button class="action-btn" style="background-color: var(--primary); width: 180px;" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
             </div>
@@ -467,7 +467,7 @@
                     <div class="form-group">
                         <label for="bulkCategorySelect">Associated Category</label>
                         <select id="bulkCategorySelect">
-                            <option value="Non ALDI">Non ALDI</option>
+                            <option value="LIDL">LIDL</option>
                             <option value="ALDI">ALDI</option>
                             <option value="Ecopassport">Ecopassport</option>
                             <option value="Bulky Sample">Bulky Sample</option>
@@ -484,7 +484,7 @@
         <div class="card">
             <h3>⚖️ Regulatory Box Lifecycle Sorting Terminal</h3>
             <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.01em;">
-                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">Non ALDI</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
+                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">LIDL</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
             </p>
             <input class="minimal-filter-input" id="filterDisposalInput" placeholder="🔍 Filter terminal by Box No or Category Group..." oninput="filterDisposalLogsTable()">
             <div class="table-scroll-wrapper">
@@ -600,11 +600,31 @@ function parseAndStageBarcodeData(rawPayload) {
         }
     }
 
+    // 1. Check if it already exists in the current staging queue
     if (activeBatchQueue.some(item => item.reportNo === targetReportNo)) {
         alert(`Notice: ID ${targetReportNo} already exists in the queue.`);
         return;
     }
 
+    // 2. PRE-SCREEN LAYER: Cross-reference with the master inventory database
+    if (masterInventoryCache && masterInventoryCache.length > 0) {
+        const duplicateRecord = masterInventoryCache.find(itm => 
+            itm.ReportNo && itm.ReportNo.toString().trim().toLowerCase() === targetReportNo.toLowerCase()
+        );
+
+        // If it exists and has not been disposed, block the entry
+        if (duplicateRecord && duplicateRecord.Status !== "Disposed") {
+            alert(`⚠️ Duplicate Entry Blocked!\n\n` +
+                  `Report No: ${duplicateRecord.ReportNo} already exists in active storage.\n` +
+                  `• Current Location: Box ${duplicateRecord.BoxNo}\n` +
+                  `• Category: ${duplicateRecord.Category}\n` +
+                  `• Status: ${duplicateRecord.Status}\n\n` +
+                  `Please locate or manage the existing item instead of assigning it to a new box.`);
+            return; 
+        }
+    }
+
+    // 3. Process item if it passes validations
     activeBatchQueue.push({
         reportNo: targetReportNo,
         dueDate: computedISOString,
@@ -829,9 +849,10 @@ function performSampleSearch() {
     let q = document.getElementById("searchQuery").value.trim().toLowerCase();
     let panel = document.getElementById("searchResultPanel");
     
-    if (!q) { alert("Please type an exact Report No to find."); return; }
+    if (!q) { alert("Please type a Report No to find."); return; }
     
-    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase() === q);
+    // Using .includes() to allow partial matches like "22036"
+    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase().includes(q));
     if (!match) {
         alert("No matched asset footprint found in active storage.");
         panel.style.display = "none";
@@ -932,7 +953,7 @@ function calculateDisposalSchedules() {
     let boxGroups = {};
     masterInventoryCache.forEach(itm => {
         let bn = itm.BoxNo || "Unknown Box";
-        let catGroup = itm.Category || "Non ALDI";
+        let catGroup = itm.Category || "LIDL";
         let compositeKey = `${catGroup}_${bn}`;
 
         if (!boxGroups[compositeKey]) {
@@ -979,7 +1000,6 @@ function calculateDisposalSchedules() {
         }
 
         let tr = document.createElement("tr");
-        // Rearranged table structure layout: Column 1 = Category, Column 2 = Carton Box No
         tr.innerHTML = `<td><strong>${b.category}</strong></td><td><strong>${b.boxNo}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
         tableBody.appendChild(tr);
     });
