@@ -158,6 +158,17 @@
         }
         input:focus, select:focus { outline: none; border-color: var(--accent); background-color: #ffffff; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15); }
 
+        /* 黃色高亮樣式設定 */
+        #boxNo, #reportNo {
+            background-color: #fffbeb;
+            border-color: #fef08a;
+        }
+        #boxNo:focus, #reportNo:focus {
+            background-color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        }
+
         button.action-btn { 
             width: 100%; padding: 12px 20px; background-color: var(--accent); color: white; border: none; 
             border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease;
@@ -169,7 +180,7 @@
         button.secondary-btn { background-color: #f1f5f9; color: var(--primary); border: 1px solid var(--border); }
         button.secondary-btn:hover { background-color: #e2e8f0; border-color: var(--text-muted); }
 
-        .table-scroll-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background-color: #ffffff; scroll-behavior: smooth; }
+        .table-scroll-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background-color: #ffffff; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
         th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
@@ -182,7 +193,20 @@
         .badge.badge-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde047; }
         .badge.badge-info { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
 
-        .items-counter { background: var(--primary); color: #ffffff; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; margin-left: auto; font-weight: 600; text-transform: none; }
+        /* Counter Font Adjusted to 2x (From 0.75rem to 1.5rem) */
+        .items-counter { 
+            background: var(--primary); 
+            color: #ffffff; 
+            padding: 4px 12px; 
+            border-radius: 8px; 
+            font-size: 1.5rem; 
+            margin-left: auto; 
+            font-weight: 700; 
+            text-transform: none; 
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
 
         .search-box-container { display: flex; gap: 14px; margin-bottom: 20px; }
         .search-result-panel { background: #f0f7ff; border-left: 4px solid var(--accent); padding: 20px; border-radius: 0 8px 8px 0; display: none; margin-bottom: 20px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -255,15 +279,6 @@
             object-fit: cover;
         }
 
-        /* 🌟 新增：暫存佇列新加入項目的黃色高亮淡出效果 🌟 */
-        @keyframes highlightFade {
-            0% { background-color: #fef08a; } /* 明亮柔和黃色 */
-            100% { background-color: transparent; }
-        }
-        .highlight-new-row td {
-            animation: highlightFade 2.5s ease-out forwards;
-        }
-
         @media (max-width: 768px) {
             body { padding: 20px 14px; }
             header { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
@@ -297,45 +312,6 @@
 
             .form-grid { grid-template-columns: 1fr; }
             .search-box-container { flex-direction: column; }
-            .search-box-container button { width: 100% !important; }
-            .card { padding: 20px; }
-            .card h3 { margin: -20px -20px 20px -20px; padding: 14px 20px; }
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 20px 14px; }
-            header { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
-            .header-title-container { flex-direction: column; text-align: center; gap: 12px; }
-            
-            .tabs-nav { 
-                flex-direction: column; 
-                gap: 10px; 
-                border-bottom: none; 
-            }
-            .tab-btn { 
-                width: 100%; 
-                padding: 14px 18px; 
-                font-size: 0.9rem; 
-                border-bottom: none;
-                border-left: 3px solid transparent;
-                background-color: #ffffff;
-                color: var(--text-muted);
-                border-radius: 8px;
-                box-sizing: border-box;
-                border: 1px solid var(--border);
-                text-align: left;
-            }
-            .tab-btn:hover { color: var(--accent); background-color: #f8fafc; }
-            .tab-btn.active { 
-                border-bottom: none;
-                border-left: 3px solid var(--accent);
-                background-color: var(--primary-light);
-                color: var(--accent);
-            }
-
-            .form-grid { grid-template-columns: 1fr; }
-            .search-box-container { flex-direction: column; }
-            .search-box-container button { width: 100% !important; }
             .card { padding: 20px; }
             .card h3 { margin: -20px -20px 20px -20px; padding: 14px 20px; }
         }
@@ -380,7 +356,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="category">Category</label>
-                            <select id="category">
+                            <select id="category" onchange="updateBoxPrefix()">
                                 <option value="Non ALDI">Non ALDI</option>
                                 <option value="ALDI">ALDI</option>
                                 <option value="Ecopassport">Ecopassport</option>
@@ -470,20 +446,11 @@
         <div class="card">
             <h3>🔍 Global Sample Locator Engine</h3>
             <div class="search-box-container">
-                <input id="searchQuery" placeholder="Enter full Report Number to pinpoint location..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
-                <button class="action-btn" style="width: 150px;" onclick="performSampleSearch()">Search Item</button>
-                <button class="action-btn" style="background-color: var(--primary); width: 180px;" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
+                <input id="searchQuery" placeholder="Type Report Number to pinpoint location instantly..." style="font-size: 1rem;" oninput="performPartialSampleSearch()">
             </div>
 
             <div class="search-result-panel" id="searchResultPanel">
-                <h4 style="margin: 0 0 14px 0; color: var(--accent); font-size: 1rem; font-weight: 700;">🎯 Asset Match Profile Found:</h4>
-                <div class="search-result-grid">
-                    <div><strong>Report No:</strong> <span id="resReportNo" style="color: var(--accent); font-weight: 700;">-</span></div>
-                    <div><strong>Category Group:</strong> <span id="resCategory" style="color: var(--text-main);">-</span></div>
-                    <div><strong>Physical Location:</strong> <span id="resBox" class="badge badge-info">-</span></div>
-                    <div><strong>Lab Expiry Date:</strong> <span id="resDate" style="color: var(--text-main);">-</span></div>
-                    <div><strong>Current Custody Status:</strong> <span id="resStatus">-</span></div>
-                </div>
+                <!-- Content will be injected dynamically on user input -->
             </div>
         </div>
 
@@ -555,6 +522,27 @@ let activeBatchQueue = [];
 let masterInventoryCache = []; 
 let hardwareCameraInstance = null; 
 
+/* 自動更新 Carton Box No 的前綴功能 */
+function updateBoxPrefix() {
+    const category = document.getElementById("category").value;
+    const boxNoInput = document.getElementById("boxNo");
+    
+    const prefixes = {
+        "Non ALDI": "N",
+        "ALDI": "N",
+        "Ecopassport": "N",
+        "Bulky Sample": "NA",
+        "To Helen": "H"
+    };
+    
+    const prefix = prefixes[category] || "";
+    let currentVal = boxNoInput.value.trim();
+    
+    // 只保留原輸入值結尾的純數字部分，並補上新的英文字母前綴
+    let digits = currentVal.replace(/^\D+/g, ''); 
+    boxNoInput.value = prefix + digits;
+}
+
 function switchSystemTab(evt, tabId) {
     terminateHardwareCameraScan();
 
@@ -575,6 +563,7 @@ function switchSystemTab(evt, tabId) {
 window.addEventListener("DOMContentLoaded", () => {
     fetchTransactionalLogs();
     refreshMasterDataCache(true);
+    updateBoxPrefix(); // 初始化載入時預填第一個分類的前綴
 });
 
 /* INITIATE NATIVE DEVICE CAMERA STREAM WITH DYNAMIC ROUTING RULES */
@@ -610,7 +599,7 @@ function initiateMobileCameraScan() {
             else if (document.getElementById("tab-search-hub").classList.contains("active")) {
                 if (processedString.includes("_")) { processedString = processedString.split("_")[0]; }
                 document.getElementById("searchQuery").value = processedString;
-                performSampleSearch();
+                performPartialSampleSearch();
             }
             
             terminateHardwareCameraScan();
@@ -658,8 +647,7 @@ function parseAndStageBarcodeData(rawPayload) {
         displayDate: computedISOString ? computedISOString : "No Date Parsed"
     });
 
-    // 🌟 變更：傳入 true 啟動新項目高亮與滾動功能
-    renderStagedEntryGrid(true);
+    renderStagedEntryGrid();
 }
 
 function addSampleViaManualEntry() {
@@ -669,8 +657,7 @@ function addSampleViaManualEntry() {
     inputField.value = "";
 }
 
-// 🌟 變更：新增 highlightLast 參數（預設為 false）
-function renderStagedEntryGrid(highlightLast = false) {
+function renderStagedEntryGrid() {
     const body = document.getElementById("entryQueueTableBody");
     document.getElementById("entryQueueCounter").innerText = `${activeBatchQueue.length} Samples`;
 
@@ -689,24 +676,6 @@ function renderStagedEntryGrid(highlightLast = false) {
         `;
         body.appendChild(tr);
     });
-
-    // 🌟 新增：針對最後一個新加入的 Row 進行動態高亮與自動置底滾動
-    if (highlightLast && activeBatchQueue.length > 0) {
-        const rows = body.querySelectorAll("tr");
-        const lastRow = rows[rows.length - 1];
-        if (lastRow) {
-            lastRow.classList.add("highlight-new-row");
-            
-            // 尋找包裹 Table 的捲軸容器
-            const scrollWrapper = body.closest('.table-scroll-wrapper');
-            if (scrollWrapper) {
-                // 使用 requestAnimationFrame 確保 DOM 已完全繪製再執行滾動
-                requestAnimationFrame(() => {
-                    scrollWrapper.scrollTop = scrollWrapper.scrollHeight;
-                });
-            }
-        }
-    }
 }
 
 function removeItemFromActiveStaging(pos) {
@@ -884,6 +853,11 @@ async function refreshMasterDataCache(triggerDisposalAfter = false) {
 
         renderDashboardVisualHub();
         calculateDisposalSchedules();
+        
+        // Auto-refresh the partial search display matrix if query text resides inside input field
+        if (document.getElementById("searchQuery") && document.getElementById("searchQuery").value.trim()) {
+            performPartialSampleSearch();
+        }
     } catch (err) {
         console.error("Master Sync Failure:", err);
         if (hub) {
@@ -892,34 +866,71 @@ async function refreshMasterDataCache(triggerDisposalAfter = false) {
     }
 }
 
-function performSampleSearch() {
+/* REAL-TIME DYNAMIC PARTIAL SEARCH MATCH ENGINE */
+function performPartialSampleSearch() {
     let q = document.getElementById("searchQuery").value.trim().toLowerCase();
     let panel = document.getElementById("searchResultPanel");
     
-    if (!q) { alert("Please type an exact Report No to find."); return; }
-    
-    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase() === q);
-    if (!match) {
-        alert("No matched asset footprint found in active storage.");
+    if (!q) {
         panel.style.display = "none";
+        panel.innerHTML = "";
+        return;
+    }
+    
+    // Filter matching data fragments locally via text indexing matrix rules
+    let matches = masterInventoryCache.filter(itm => 
+        itm.ReportNo && itm.ReportNo.toString().toLowerCase().includes(q)
+    );
+    
+    if (matches.length === 0) {
+        panel.innerHTML = `<h4 style="margin: 0; color: var(--danger); font-size: 0.95rem; font-weight: 700;">❌ No matching asset catalog logs discovered.</h4>`;
+        panel.style.display = "block";
         return;
     }
 
-    document.getElementById("resReportNo").innerText = match.ReportNo;
-    document.getElementById("resCategory").innerText = match.Category;
-    document.getElementById("resBox").innerText = match.BoxNo;
-    document.getElementById("resDate").innerText = match.LabDueDate ? match.LabDueDate.split("T")[0] : "N/A";
-    
-    if (match.Status === "Disposed") {
-        document.getElementById("resStatus").innerHTML = `<span class="badge badge-danger">Disposed</span>`;
-    } else if (match.Status && match.Status.includes("Borrowed")) {
-        document.getElementById("resStatus").innerHTML = `<span class="badge badge-warning">${match.Status}</span>`;
-    } else if (match.Status && match.Status.includes("Returned to CS")) {
-        document.getElementById("resStatus").innerHTML = `<span class="badge badge-info">${match.Status}</span>`;
-    } else {
-        document.getElementById("resStatus").innerHTML = `<span class="badge badge-success">Available in Box</span>`;
-    }
-    
+    let htmlStream = `
+        <h4 style="margin: 0 0 14px 0; color: var(--accent); font-size: 1rem; font-weight: 700;">🎯 Asset Footprints Located (${matches.length}):</h4>
+        <div class="table-scroll-wrapper" style="max-height: 320px;">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>Report Number</th>
+                        <th>Category Group</th>
+                        <th>Box Location</th>
+                        <th>Lab Due Date</th>
+                        <th>Custody Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    matches.forEach(match => {
+        let statusBadge = "";
+        if (match.Status === "Disposed") {
+            statusBadge = `<span class="badge badge-danger">Disposed</span>`;
+        } else if (match.Status && match.Status.includes("Borrowed")) {
+            statusBadge = `<span class="badge badge-warning">${match.Status}</span>`;
+        } else if (match.Status && match.Status.includes("Returned to CS")) {
+            statusBadge = `<span class="badge badge-info">${match.Status}</span>`;
+        } else {
+            statusBadge = `<span class="badge badge-success">Available in Box</span>`;
+        }
+
+        let parsedDate = match.LabDueDate ? match.LabDueDate.split("T")[0] : "N/A";
+
+        htmlStream += `
+            <tr>
+                <td><strong>${match.ReportNo}</strong></td>
+                <td>${match.Category}</td>
+                <td><span class="badge badge-info">${match.BoxNo}</span></td>
+                <td>${parsedDate}</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+    });
+
+    htmlStream += `</tbody></table></div>`;
+    panel.innerHTML = htmlStream;
     panel.style.display = "block";
 }
 
@@ -1046,7 +1057,6 @@ function calculateDisposalSchedules() {
         }
 
         let tr = document.createElement("tr");
-        // Rearranged table structure layout: Column 1 = Category, Column 2 = Carton Box No
         tr.innerHTML = `<td><strong>${b.category}</strong></td><td><strong>${b.boxNo}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
         tableBody.appendChild(tr);
     });
