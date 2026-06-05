@@ -169,7 +169,7 @@
         button.secondary-btn { background-color: #f1f5f9; color: var(--primary); border: 1px solid var(--border); }
         button.secondary-btn:hover { background-color: #e2e8f0; border-color: var(--text-muted); }
 
-        .table-scroll-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background-color: #ffffff; }
+        .table-scroll-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background-color: #ffffff; scroll-behavior: smooth; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
         th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
@@ -255,6 +255,53 @@
             object-fit: cover;
         }
 
+        /* 🌟 新增：暫存佇列新加入項目的黃色高亮淡出效果 🌟 */
+        @keyframes highlightFade {
+            0% { background-color: #fef08a; } /* 明亮柔和黃色 */
+            100% { background-color: transparent; }
+        }
+        .highlight-new-row td {
+            animation: highlightFade 2.5s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 14px; }
+            header { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
+            .header-title-container { flex-direction: column; text-align: center; gap: 12px; }
+            
+            .tabs-nav { 
+                flex-direction: column; 
+                gap: 10px; 
+                border-bottom: none; 
+            }
+            .tab-btn { 
+                width: 100%; 
+                padding: 14px 18px; 
+                font-size: 0.9rem; 
+                border-bottom: none;
+                border-left: 3px solid transparent;
+                background-color: #ffffff;
+                color: var(--text-muted);
+                border-radius: 8px;
+                box-sizing: border-box;
+                border: 1px solid var(--border);
+                text-align: left;
+            }
+            .tab-btn:hover { color: var(--accent); background-color: #f8fafc; }
+            .tab-btn.active { 
+                border-bottom: none;
+                border-left: 3px solid var(--accent);
+                background-color: var(--primary-light);
+                color: var(--accent);
+            }
+
+            .form-grid { grid-template-columns: 1fr; }
+            .search-box-container { flex-direction: column; }
+            .search-box-container button { width: 100% !important; }
+            .card { padding: 20px; }
+            .card h3 { margin: -20px -20px 20px -20px; padding: 14px 20px; }
+        }
+
         @media (max-width: 768px) {
             body { padding: 20px 14px; }
             header { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
@@ -333,8 +380,8 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="category">Category</label>
-                            <select id="category" onchange="handleCategoryChange()">
-                                <option value="LIDL">LIDL</option>
+                            <select id="category">
+                                <option value="Non ALDI">Non ALDI</option>
                                 <option value="ALDI">ALDI</option>
                                 <option value="Ecopassport">Ecopassport</option>
                                 <option value="Bulky Sample">Bulky Sample</option>
@@ -423,7 +470,7 @@
         <div class="card">
             <h3>🔍 Global Sample Locator Engine</h3>
             <div class="search-box-container">
-                <input id="searchQuery" placeholder="Enter full or partial Report Number..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
+                <input id="searchQuery" placeholder="Enter full Report Number to pinpoint location..." style="font-size: 1rem;" onkeydown="if(event.key === 'Enter') performSampleSearch()">
                 <button class="action-btn" style="width: 150px;" onclick="performSampleSearch()">Search Item</button>
                 <button class="action-btn" style="background-color: var(--primary); width: 180px;" onclick="initiateMobileCameraScan()">📷 SCAN BY PHONE</button>
             </div>
@@ -467,7 +514,7 @@
                     <div class="form-group">
                         <label for="bulkCategorySelect">Associated Category</label>
                         <select id="bulkCategorySelect">
-                            <option value="LIDL">LIDL</option>
+                            <option value="Non ALDI">Non ALDI</option>
                             <option value="ALDI">ALDI</option>
                             <option value="Ecopassport">Ecopassport</option>
                             <option value="Bulky Sample">Bulky Sample</option>
@@ -484,7 +531,7 @@
         <div class="card">
             <h3>⚖️ Regulatory Box Lifecycle Sorting Terminal</h3>
             <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.01em;">
-                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">LIDL</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
+                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">Non ALDI</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
             </p>
             <input class="minimal-filter-input" id="filterDisposalInput" placeholder="🔍 Filter terminal by Box No or Category Group..." oninput="filterDisposalLogsTable()">
             <div class="table-scroll-wrapper">
@@ -508,21 +555,6 @@ let activeBatchQueue = [];
 let masterInventoryCache = []; 
 let hardwareCameraInstance = null; 
 
-// Auto-presets box number based on chosen category configuration rules
-function handleCategoryChange() {
-    const categorySelect = document.getElementById("category");
-    const boxNoInput = document.getElementById("boxNo");
-    const selection = categorySelect.value;
-
-    if (selection === "Bulky Sample") {
-        boxNoInput.value = "NA";
-    } else if (selection === "ALDI" || selection === "LIDL" || selection === "Ecopassport") {
-        boxNoInput.value = "N";
-    } else if (selection === "To Helen") {
-        boxNoInput.value = "H";
-    }
-}
-
 function switchSystemTab(evt, tabId) {
     terminateHardwareCameraScan();
 
@@ -541,8 +573,6 @@ function switchSystemTab(evt, tabId) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    // Initial assignment check on load
-    handleCategoryChange();
     fetchTransactionalLogs();
     refreshMasterDataCache(true);
 });
@@ -573,6 +603,7 @@ function initiateMobileCameraScan() {
                 parseAndStageBarcodeData(processedString);
             } 
             else if (document.getElementById("tab-tracking-dashboard").classList.contains("active")) {
+                // If the barcode contains standard structural data details like '_', clean it for processing
                 if (processedString.includes("_")) { processedString = processedString.split("_")[0]; }
                 document.getElementById("trackingReportNo").value = processedString;
             } 
@@ -621,29 +652,14 @@ function parseAndStageBarcodeData(rawPayload) {
         return;
     }
 
-    if (masterInventoryCache && masterInventoryCache.length > 0) {
-        const duplicateRecord = masterInventoryCache.find(itm => 
-            itm.ReportNo && itm.ReportNo.toString().trim().toLowerCase() === targetReportNo.toLowerCase()
-        );
-
-        if (duplicateRecord && duplicateRecord.Status !== "Disposed") {
-            alert(`⚠️ Duplicate Entry Blocked!\n\n` +
-                  `Report No: ${duplicateRecord.ReportNo} already exists in active storage.\n` +
-                  `• Current Location: Box ${duplicateRecord.BoxNo}\n` +
-                  `• Category: ${duplicateRecord.Category}\n` +
-                  `• Status: ${duplicateRecord.Status}\n\n` +
-                  `Please locate or manage the existing item instead of assigning it to a new box.`);
-            return; 
-        }
-    }
-
     activeBatchQueue.push({
         reportNo: targetReportNo,
         dueDate: computedISOString,
         displayDate: computedISOString ? computedISOString : "No Date Parsed"
     });
 
-    renderStagedEntryGrid();
+    // 🌟 變更：傳入 true 啟動新項目高亮與滾動功能
+    renderStagedEntryGrid(true);
 }
 
 function addSampleViaManualEntry() {
@@ -653,7 +669,8 @@ function addSampleViaManualEntry() {
     inputField.value = "";
 }
 
-function renderStagedEntryGrid() {
+// 🌟 變更：新增 highlightLast 參數（預設為 false）
+function renderStagedEntryGrid(highlightLast = false) {
     const body = document.getElementById("entryQueueTableBody");
     document.getElementById("entryQueueCounter").innerText = `${activeBatchQueue.length} Samples`;
 
@@ -672,6 +689,24 @@ function renderStagedEntryGrid() {
         `;
         body.appendChild(tr);
     });
+
+    // 🌟 新增：針對最後一個新加入的 Row 進行動態高亮與自動置底滾動
+    if (highlightLast && activeBatchQueue.length > 0) {
+        const rows = body.querySelectorAll("tr");
+        const lastRow = rows[rows.length - 1];
+        if (lastRow) {
+            lastRow.classList.add("highlight-new-row");
+            
+            // 尋找包裹 Table 的捲軸容器
+            const scrollWrapper = body.closest('.table-scroll-wrapper');
+            if (scrollWrapper) {
+                // 使用 requestAnimationFrame 確保 DOM 已完全繪製再執行滾動
+                requestAnimationFrame(() => {
+                    scrollWrapper.scrollTop = scrollWrapper.scrollHeight;
+                });
+            }
+        }
+    }
 }
 
 function removeItemFromActiveStaging(pos) {
@@ -680,6 +715,7 @@ function removeItemFromActiveStaging(pos) {
 }
 
 async function commitBatchToStorageLog() {
+    // SECURITY AUTHENTICATION PROMPT Layer
     const systemVerificationToken = prompt("Security clearance required.\nPlease type the authorization key to save changes:");
     if (systemVerificationToken !== "SPP") {
         alert("Operation Aborted: System access denied. Invalid password code.");
@@ -860,9 +896,9 @@ function performSampleSearch() {
     let q = document.getElementById("searchQuery").value.trim().toLowerCase();
     let panel = document.getElementById("searchResultPanel");
     
-    if (!q) { alert("Please type a Report No to find."); return; }
+    if (!q) { alert("Please type an exact Report No to find."); return; }
     
-    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase().includes(q));
+    let match = masterInventoryCache.find(itm => itm.ReportNo.toString().toLowerCase() === q);
     if (!match) {
         alert("No matched asset footprint found in active storage.");
         panel.style.display = "none";
@@ -963,7 +999,7 @@ function calculateDisposalSchedules() {
     let boxGroups = {};
     masterInventoryCache.forEach(itm => {
         let bn = itm.BoxNo || "Unknown Box";
-        let catGroup = itm.Category || "LIDL";
+        let catGroup = itm.Category || "Non ALDI";
         let compositeKey = `${catGroup}_${bn}`;
 
         if (!boxGroups[compositeKey]) {
@@ -982,10 +1018,11 @@ function calculateDisposalSchedules() {
     tableBody.innerHTML = "";
     const now = new Date();
 
+    // SORTING PROCESS - Categorical Ascending Order matched into Box Numbers Ascending sequence
     const sortedTimelineArrays = Object.values(boxGroups).sort((alpha, beta) => {
-        const structuralCategoryComparison = String(alpha.category).localeCompare(String(beta.category), undefined, {numeric: true, sensitivity: 'base'});
+        const structuralCategoryComparison = (alpha.category || "").localeCompare(beta.category || "", undefined, {numeric: true, sensitivity: 'base'});
         if (structuralCategoryComparison !== 0) return structuralCategoryComparison;
-        return String(alpha.boxNo).localeCompare(String(beta.boxNo), undefined, {numeric: true, sensitivity: 'base'});
+        return (alpha.boxNo || "").localeCompare(beta.boxNo || "", undefined, {numeric: true, sensitivity: 'base'});
     });
 
     sortedTimelineArrays.forEach(b => {
@@ -1009,6 +1046,7 @@ function calculateDisposalSchedules() {
         }
 
         let tr = document.createElement("tr");
+        // Rearranged table structure layout: Column 1 = Category, Column 2 = Carton Box No
         tr.innerHTML = `<td><strong>${b.category}</strong></td><td><strong>${b.boxNo}</strong></td><td><code>${maxDateStr}</code></td><td><code style="color:var(--accent);">${targetDispStr}</code></td><td>${statusHtml}</td>`;
         tableBody.appendChild(tr);
     });
@@ -1038,6 +1076,7 @@ function toggleBulkActionPanel() {
 }
 
 async function submitBulkDisposalStatus() {
+    // SECURITY AUTHENTICATION PROMPT Layer
     const systemVerificationToken = prompt("Security clearance required.\nPlease type the authorization key to mark box as disposed:");
     if (systemVerificationToken !== "SPP") {
         alert("Operation Aborted: System access denied. Invalid password code.");
