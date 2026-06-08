@@ -357,7 +357,7 @@
                         <div class="form-group">
                             <label for="category">Category</label>
                             <select id="category" onchange="updateBoxPrefix()">
-                                <option value="Non ALDI">Non ALDI</option>
+                                <option value="LIDL">LIDL</option>
                                 <option value="ALDI">ALDI</option>
                                 <option value="Ecopassport">Ecopassport</option>
                                 <option value="Bulky Sample">Bulky Sample</option>
@@ -481,7 +481,7 @@
                     <div class="form-group">
                         <label for="bulkCategorySelect">Associated Category</label>
                         <select id="bulkCategorySelect">
-                            <option value="Non ALDI">Non ALDI</option>
+                            <option value="LIDL">LIDL</option>
                             <option value="ALDI">ALDI</option>
                             <option value="Ecopassport">Ecopassport</option>
                             <option value="Bulky Sample">Bulky Sample</option>
@@ -498,7 +498,7 @@
         <div class="card">
             <h3>⚖️ Regulatory Box Lifecycle Sorting Terminal</h3>
             <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.01em;">
-                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">Non ALDI</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
+                Organization Retention Rules: <span style="color:var(--text-main); font-weight:700;">ALDI</span> (+6 months), <span style="color:var(--text-main); font-weight:700;">LIDL</span> (+3 months), <span style="color:var(--text-main); font-weight:700;">Ecopassport</span> (+12 months).
             </p>
             <input class="minimal-filter-input" id="filterDisposalInput" placeholder="🔍 Filter terminal by Box No or Category Group..." oninput="filterDisposalLogsTable()">
             <div class="table-scroll-wrapper">
@@ -528,7 +528,7 @@ function updateBoxPrefix() {
     const boxNoInput = document.getElementById("boxNo");
     
     const prefixes = {
-        "Non ALDI": "N",
+        "LIDL": "N",
         "ALDI": "N",
         "Ecopassport": "N",
         "Bulky Sample": "NA",
@@ -1010,7 +1010,7 @@ function calculateDisposalSchedules() {
     let boxGroups = {};
     masterInventoryCache.forEach(itm => {
         let bn = itm.BoxNo || "Unknown Box";
-        let catGroup = itm.Category || "Non ALDI";
+        let catGroup = itm.Category || "LIDL";
         let compositeKey = `${catGroup}_${bn}`;
 
         if (!boxGroups[compositeKey]) {
