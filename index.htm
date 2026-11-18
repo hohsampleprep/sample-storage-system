@@ -455,6 +455,12 @@ LAYOUT NOTES (Cat / V2.3) — optional polish backlog, not blockers:
             font-size: 0.78rem;
             font-weight: 600;
         }
+        .data-source-status .ds-progress {
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
         .data-source-status .ds-pill {
             display: inline-block;
             margin-left: 8px;
@@ -782,6 +788,118 @@ function noteGasMirrorWarning(failedCount) {
     renderDataSourceStatus();
 }
 
+function setSyncProgress(msg) {
+    const el = document.getElementById("dataSourceStatus");
+    if (!el) return;
+    let prog = el.querySelector(".ds-progress");
+    if (!msg) {
+        if (prog) prog.remove();
+        return;
+    }
+    if (!el.querySelector(".ds-body")) {
+        // Banner not rendered yet — show a minimal status so the user sees progress.
+        el.hidden = false;
+        el.style.display = "flex";
+    }
+    if (!prog) {
+        prog = document.createElement("div");
+        prog.className = "ds-progress";
+        const body = el.querySelector(".ds-body") || el;
+        body.appendChild(prog);
+    }
+    prog.textContent = msg;
+}
+
+const MASTER_CACHE_KEY = "ssms-master-cache-v1";
+
+function persistMasterCache() {
+    try {
+        localStorage.setItem(MASTER_CACHE_KEY, JSON.stringify({
+            savedAt: window.__storageLastSync || new Date().toISOString(),
+            source: window.__storageDataSource || dataSource || "",
+            items: masterInventoryCache
+        }));
+    } catch (e) {
+        console.warn("Inventory cache persist failed:", e);
+    }
+}
+
+function hydrateMasterCacheFromDisk() {
+    try {
+        const raw = localStorage.getItem(MASTER_CACHE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.items) || parsed.items.length === 0) return false;
+        masterInventoryCache = parsed.items;
+        try {
+            if (parsed.source) {
+                window.__storageDataSource = parsed.source;
+                dataSource = parsed.source;
+            }
+            if (parsed.savedAt) window.__storageLastSync = parsed.savedAt;
+            window.__storageDataSourceDetail = "showing last cache — refreshing…";
+        } catch (_) {}
+        renderDataSourceStatus();
+        try { renderDashboardVisualHub(); } catch (_) {}
+        try { calculateDisposalSchedules(); } catch (_) {}
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function ackLooksFailed(result) {
+    if (!result || result.ok === false) return true;
+    if (result.parsedOk === false) return true;
+    const body = (result.body || "").trim();
+    if (/^<!DOCTYPE|^<html/i.test(body)) return true;
+    return false;
+}
+
+/** Prefer one batch POST; if the host/script does not support it, write rows one at a time. */
+async function writeRecordsBatched(batchAction, singleAction, records, onProgress) {
+    const total = records.length;
+    if (!total) return { processed: 0, failed: 0, gasMirrorFails: 0, unverified: 0 };
+    if (onProgress) onProgress("Saving 0/" + total + "…");
+    try {
+        const batchResult = await postApiPayload({ action: batchAction, records: records });
+        if (!ackLooksFailed(batchResult)) {
+            if (onProgress) onProgress("");
+            return {
+                processed: total,
+                failed: 0,
+                gasMirrorFails: batchResult.gasMirror === false ? 1 : 0,
+                unverified: batchResult.verified === false ? total : 0,
+                batched: true
+            };
+        }
+        console.warn("Batch write not accepted, falling back to one-by-one:", batchResult);
+    } catch (batchErr) {
+        console.warn("Batch write threw, falling back to one-by-one:", batchErr);
+    }
+
+    let processed = 0, failed = 0, gasMirrorFails = 0, unverified = 0;
+    for (let i = 0; i < total; i++) {
+        if (onProgress) onProgress("Saving " + (i + 1) + "/" + total + "…");
+        try {
+            const result = await postApiPayload(Object.assign({ action: singleAction }, records[i]));
+            if (!ackLooksFailed(result)) {
+                processed++;
+                if (result.verified === false) unverified++;
+                if (result.gasMirror === false) gasMirrorFails++;
+            } else {
+                failed++;
+                console.error("Row write failed:", records[i], result);
+            }
+        } catch (err) {
+            failed++;
+            console.error("Row write threw:", records[i], err);
+        }
+    }
+    if (onProgress) onProgress("");
+    return { processed: processed, failed: failed, gasMirrorFails: gasMirrorFails, unverified: unverified, batched: false };
+}
+
 function localApiUrl(path) {
     return location.origin + path;
 }
@@ -935,10 +1053,14 @@ async function postGasPayload(payload) {
         });
         let ackText = "";
         try { ackText = await res.text(); } catch (_) {}
-        if (!res.ok) {
-            return { ok: false, verified: true, status: res.status, body: ackText.slice(0, 160), source: "apps-script" };
+        let parsed = null;
+        try { parsed = ackText ? JSON.parse(ackText) : null; } catch (_) {}
+        const htmlErr = /^<!DOCTYPE|^<html/i.test((ackText || "").trim());
+        if (!res.ok || htmlErr || (parsed && parsed.ok === false)) {
+            const errMsg = (parsed && parsed.error) ? parsed.error : ackText.slice(0, 160);
+            return { ok: false, verified: true, status: res.status, body: ackText.slice(0, 160), error: errMsg, parsedOk: false, source: "apps-script" };
         }
-        return { ok: true, verified: true, status: res.status, body: ackText.slice(0, 160), source: "apps-script" };
+        return { ok: true, verified: true, status: res.status, body: ackText.slice(0, 160), count: parsed && parsed.count, parsedOk: (parsed && parsed.ok === true) ? true : undefined, source: "apps-script" };
     } catch (corsErr) {
         try {
             await fetch(GOOGLE_SCRIPT_URL, {
@@ -1074,6 +1196,7 @@ function switchSystemTab(evt, tabId) {
 
 window.addEventListener("DOMContentLoaded", () => {
     showFileProtocolWarning();
+    hydrateMasterCacheFromDisk();
     fetchTransactionalLogs();
     refreshMasterDataCache(true);
     updateBoxPrefix(); // 初始化載入時預填第一個分類的前綴
@@ -1210,30 +1333,40 @@ async function commitBatchToStorageLog() {
     if (!targetBox) { alert("Operational Error: Carton Box No cannot be blank."); return; }
     if (activeBatchQueue.length === 0) { alert("Abort: Staging queue is empty."); return; }
 
-    let recordsProcessed = 0;
-    let gasMirrorFails = 0;
+    const records = activeBatchQueue.map(record => ({
+        reportNo: record.reportNo,
+        category: targetedCategory,
+        boxNo: targetBox,
+        labDueDate: record.displayDate
+    }));
 
-    for (let record of activeBatchQueue) {
-        try {
-            const result = await postApiPayload({
-                action: "addStorage",
-                reportNo: record.reportNo,
-                category: targetedCategory,
-                boxNo: targetBox,
-                labDueDate: record.displayDate
-            });
-            if (result.ok) {
-                recordsProcessed++;
-                if (result.gasMirror === false) gasMirrorFails++;
-            } else {
-                console.error(result);
-            }
-        } catch (fault) {
-            console.error(fault);
-        }
-    }
+    const write = await writeRecordsBatched(
+        "addStorageBatch",
+        "addStorage",
+        records,
+        (msg) => setSyncProgress(msg)
+    );
+    const recordsProcessed = write.processed;
+    const gasMirrorFails = write.gasMirrorFails;
+
+    records.forEach((rec) => {
+        masterInventoryCache.push({
+            ReportNo: rec.reportNo,
+            Category: rec.category,
+            BoxNo: rec.boxNo,
+            LabDueDate: rec.labDueDate,
+            Status: "Available in Box"
+        });
+    });
+    persistMasterCache();
 
     let batchMsg = `Operation Completed!\nSubmitted ${recordsProcessed} samples.`;
+    if (write.batched) {
+        batchMsg += "\nSaved as one batch write.";
+    }
+    if (write.failed > 0) {
+        batchMsg += `\n\nFailed: ${write.failed} request(s).`;
+    }
     if (gasMirrorFails > 0) {
         batchMsg += `\n\nWarning: ${gasMirrorFails} Apps Script mirror(s) failed — phone may lag until Sync-SampleStorage-FromGas runs.`;
         noteGasMirrorWarning(gasMirrorFails);
@@ -1336,10 +1469,13 @@ async function refreshMasterDataCache(triggerDisposalAfter = false) {
         hub.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 44px;">Syncing latest inventory matrix...</div>`;
     }
     showFileProtocolWarning();
+    setSyncProgress((typeof i18n !== "undefined" && i18n.t) ? i18n.t("refreshingCache") : "Refreshing inventory from cloud…");
 
     try {
-        const storageData = await fetchStorageData();
-        const returnsData = await fetchReturnsData();
+        const [storageData, returnsData] = await Promise.all([
+            fetchStorageData(),
+            fetchReturnsData()
+        ]);
 
         let finalActionTracker = {};
         returnsData.forEach(trailLog => {
@@ -1384,12 +1520,15 @@ async function refreshMasterDataCache(triggerDisposalAfter = false) {
         } catch (dispErr) {
             console.warn("Disposal calendar update failed (dashboard data still loaded):", dispErr);
         }
-        
+        persistMasterCache();
+        setSyncProgress("");
+
         // Auto-refresh the partial search display matrix if query text resides inside input field
         if (document.getElementById("searchQuery") && document.getElementById("searchQuery").value.trim()) {
             performPartialSampleSearch();
         }
     } catch (err) {
+        setSyncProgress("");
         console.error("Master Sync Failure:", err);
         const detail = (err && err.message) ? String(err.message) : String(err);
         const safe = detail.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -1730,27 +1869,22 @@ async function submitBulkDisposalStatus() {
     renderDashboardVisualHub();
     calculateDisposalSchedules();
 
-    let processedCount = 0;
-    let unverified = 0;
-    let failed = 0;
-    let gasMirrorFails = 0;
-    for (let item of matchingItems) {
-        const result = await postApiPayload({
-            action: "executeTransaction",
-            reportNo: item.ReportNo,
-            transactionType: "Disposed",
-            staff: "System Bulk Operation",
-            timestamp: new Date().toLocaleString()
-        });
-        if (result.ok) {
-            processedCount++;
-            if (!result.verified) unverified++;
-            if (result.gasMirror === false) gasMirrorFails++;
-        } else {
-            failed++;
-            console.error(`Failed log write configuration: ${item.ReportNo}`, result);
-        }
-    }
+    const txRecords = matchingItems.map((item) => ({
+        reportNo: item.ReportNo,
+        transactionType: "Disposed",
+        staff: "System Bulk Operation",
+        timestamp: new Date().toLocaleString()
+    }));
+    const write = await writeRecordsBatched(
+        "executeTransactionBatch",
+        "executeTransaction",
+        txRecords,
+        (msg) => setSyncProgress(msg)
+    );
+    const processedCount = write.processed;
+    const unverified = write.unverified;
+    const failed = write.failed;
+    const gasMirrorFails = write.gasMirrorFails;
     
     let doneMsg = i18n.t("bulkDone", { count: processedCount });
     if (unverified > 0) {
@@ -1848,6 +1982,7 @@ const i18n = (() => {
       dsCloud: "Apps Script (cloud / phone)",
       dsError: "Sync error",
       dsLastSync: "Last sync",
+      refreshingCache: "Refreshing inventory from cloud…",
       scannerTitle: "Live Barcode / QR Scanner",
       cancel: "Cancel",
     },
@@ -1919,6 +2054,7 @@ const i18n = (() => {
       dsCloud: "Apps Script（雲端／手機）",
       dsError: "同步錯誤",
       dsLastSync: "上次同步",
+      refreshingCache: "正在從雲端重新整理庫存…",
       scannerTitle: "即時條碼／QR 掃描",
       cancel: "取消",
     },
